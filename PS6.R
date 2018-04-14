@@ -47,7 +47,7 @@ data(presidentialForecast)
 
 # https://shiny.rstudio.com/articles/plot-interaction.html
 
-
+?plot
 ui <- fluidPage(
   
   # App title ----
@@ -60,18 +60,33 @@ ui <- fluidPage(
     sidebarPanel(
       
       # Include clarifying text ----
-      helpText("Here are the results from presidential forecasts from 1952-2008")
-      
+      helpText("Here are the results from presidential forecasts from 1952-2008"),
+
+        
+      # Input: Selector for choosing dataset ---
+      selectInput(inputId = "forecastModel",
+                  label = "Choose a forecast model:",
+                  choices = c("Campbell", "Lewis-Beck", "EWT2C2",
+                                "Fair", "Hibbs", "Abramowitz", "Actual")),
+        
+        
+      # Input: Numeric entry for number of obs to view ----
+      numericInput(inputId = "obs",
+                   label = "Past Elections:",
+                   value = 15,
+                   max = 15,
+                   step = 1)
     ),
-    
-    # Main panel for displaying outputs ----
-    mainPanel(
-      tabsetPanel(type = "tabs",
-                  tabPanel("Plot", plotOutput("plot"), click = "plot_click"),
-                  tabPanel("Table", tableOutput("table")))
+
+            # Main panel for displaying outputs ----
+      mainPanel(
+        tabsetPanel(type = "tabs",
+                    tabPanel("Plot", plotOutput("plot", click = "plot_click"), verbatimTextOutput("info")),
+                    tabPanel("Table", tableOutput("view")))
     )
   )
 )
+
 
 
 
@@ -81,18 +96,29 @@ server <- function(input, output) {
   data("presidentialForecast")
   
   
+  datasetInput <- reactive({
+    switch(input$forecastModel,
+           "Campbell" = presidentialForecast$Campbell, "Lewis-Beck" = presidentialForecast$`Lewis-Beck`, "EWT2C2" = presidentialForecast$EWT2C2,
+           "Fair" = presidentialForecast$Fair, "Hibbs" = presidentialForecast$Hibbs, "Abramowitz" = presidentialForecast$Abramowitz, "Actual" = presidentialForecast$Actual)
+  })
+
   output$plot <- renderPlot({
-    plot(presidentialForecast)
+    plot(datasetInput(), xlab = "Year", 
+         ylab = "Percent Vote Share in Selected Model", main = "Selected Model Vote Share by Year", 
+         type = "l")
   })
   
-  output$table <- renderTable({
-    presidentialForecast
-  }) 
+  output$view <- renderTable({
+    tail(datasetInput(), n = input$obs)
+    }, rownames = TRUE) 
   
-?plot
+  output$info <- renderText({
+    paste0("x=", input$plot_click$x, "\ny=", input$plot_click$y)
+  })
   
   
 }
+
 
 # Create Shiny app ----
 shinyApp(ui, server)
