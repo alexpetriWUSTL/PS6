@@ -28,11 +28,6 @@ runExample("11_timer") # an automated timer
 
 # Here are the results of presidential forecasts from 1952-2008
 # (this shoudl be in a lower font)
-install.packages("EBMAforecast")
-library(EBMAforecast)
-data(presidentialForecast)
-
-
 
 #2)
 ## As our second step, we are going to follow example 2 above and have it show the last X elections (as selectd by the user)
@@ -47,7 +42,6 @@ data(presidentialForecast)
 
 # https://shiny.rstudio.com/articles/plot-interaction.html
 
-?plot
 ui <- fluidPage(
   
   # App title ----
@@ -73,7 +67,7 @@ ui <- fluidPage(
       # Input: Numeric entry for number of obs to view ----
       numericInput(inputId = "obs",
                    label = "Past Elections:",
-                   value = 15,
+                   value = 1,
                    max = 15,
                    step = 1)
     ),
@@ -86,9 +80,6 @@ ui <- fluidPage(
     )
   )
 )
-
-
-
 
 # Define server logic to summarize and view selected dataset ----
 server <- function(input, output) {
@@ -105,8 +96,10 @@ server <- function(input, output) {
   output$plot <- renderPlot({
     plot(datasetInput(), xlab = "Year", 
          ylab = "Percent Vote Share in Selected Model", main = "Selected Model Vote Share by Year", 
-         type = "l")
+         type = "l", xaxt = "n")
+    axis(1, at = seq(1, 15, 1), labels = seq(1952, 2008, 4), las = 2)
   })
+  
   
   output$view <- renderTable({
     tail(datasetInput(), n = input$obs)
@@ -115,10 +108,18 @@ server <- function(input, output) {
   output$info <- renderText({
     paste0("x=", input$plot_click$x, "\ny=", input$plot_click$y)
   })
-  
-  
 }
 
 
 # Create Shiny app ----
 shinyApp(ui, server)
+
+#stuff left to do:
+# - comments
+# - add cool graphic features
+# - try to add year to the table feature
+# - try to make the clicking do year on the x value rather than 1-15
+
+
+
+
