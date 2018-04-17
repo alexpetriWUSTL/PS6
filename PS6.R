@@ -57,7 +57,7 @@ ui <- fluidPage(
       helpText("Here are the results from presidential forecasts from 1952-2008"),
 
         
-      # Input: Selector for choosing dataset ---
+      # Input: Selector for choosing dataset, including choices for each forecast ---
       selectInput(inputId = "forecastModel",
                   label = "Choose a forecast model:",
                   choices = c("Campbell", "Lewis-Beck", "EWT2C2",
@@ -72,7 +72,7 @@ ui <- fluidPage(
                    step = 1)
     ),
 
-            # Main panel for displaying outputs ----
+            # Main panel for displaying outputs, including plot, click, and table ----
       mainPanel(
         tabsetPanel(type = "tabs",
                     tabPanel("Plot", plotOutput("plot", click = "plot_click"), verbatimTextOutput("info")),
@@ -86,25 +86,24 @@ server <- function(input, output) {
   library(EBMAforecast)
   data("presidentialForecast")
   
-  
+  # a function that switches between each option for the forecast 
   datasetInput <- reactive({
     switch(input$forecastModel,
            "Campbell" = presidentialForecast$Campbell, "Lewis-Beck" = presidentialForecast$`Lewis-Beck`, "EWT2C2" = presidentialForecast$EWT2C2,
            "Fair" = presidentialForecast$Fair, "Hibbs" = presidentialForecast$Hibbs, "Abramowitz" = presidentialForecast$Abramowitz, "Actual" = presidentialForecast$Actual)
   })
-
+  # add to the output a plot, resetting the x-axis so it shows the year and not the observation number
   output$plot <- renderPlot({
     plot(datasetInput(), xlab = "Year", 
          ylab = "Percent Vote Share in Selected Model", main = "Selected Model Vote Share by Year", 
          type = "l", xaxt = "n")
     axis(1, at = seq(1, 15, 1), labels = seq(1952, 2008, 4), las = 2)
   })
-  
-  
+  #show the tail of the label so it shows the most recent election result(s) from the desired number of previous elections to see
   output$view <- renderTable({
-    tail(datasetInput(), n = input$obs)
+    tail(presidentialForecast, n = input$obs)
     }, rownames = TRUE) 
-  
+  #have the clicker render the output coordinates of wherever you click on the plot
   output$info <- renderText({
     paste0("x=", input$plot_click$x, "\ny=", input$plot_click$y)
   })
@@ -114,11 +113,7 @@ server <- function(input, output) {
 # Create Shiny app ----
 shinyApp(ui, server)
 
-#stuff left to do:
-# - comments
-# - add cool graphic features
-# - try to add year to the table feature
-# - try to make the clicking do year on the x value rather than 1-15
+
 
 
 
