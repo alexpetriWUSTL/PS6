@@ -61,7 +61,8 @@ ui <- fluidPage(
       selectInput(inputId = "forecastModel",
                   label = "Choose a forecast model:",
                   choices = c("Campbell", "Lewis-Beck", "EWT2C2",
-                                "Fair", "Hibbs", "Abramowitz", "Actual")),
+                                "Fair", "Hibbs", "Abramowitz", "Actual"),
+                  selected = "Actual"),
         
         
       # Input: Numeric entry for number of obs to view ----
@@ -88,16 +89,18 @@ server <- function(input, output) {
   
   # a function that switches between each option for the forecast 
   datasetInput <- reactive({
-    switch(input$forecastModel,
-           "Campbell" = presidentialForecast$Campbell, "Lewis-Beck" = presidentialForecast$`Lewis-Beck`, "EWT2C2" = presidentialForecast$EWT2C2,
-           "Fair" = presidentialForecast$Fair, "Hibbs" = presidentialForecast$Hibbs, "Abramowitz" = presidentialForecast$Abramowitz, "Actual" = presidentialForecast$Actual)
+   switch(input$forecastModel,
+         "Campbell" = presidentialForecast$Campbell, "Lewis-Beck" = presidentialForecast$`Lewis-Beck`, "EWT2C2" = presidentialForecast$EWT2C2,
+          "Fair" = presidentialForecast$Fair, "Hibbs" = presidentialForecast$Hibbs, "Abramowitz" = presidentialForecast$Abramowitz, "Actual" = presidentialForecast$Actual)
   })
-  # add to the output a plot, resetting the x-axis so it shows the year and not the observation number
+  # add to the output a plot, resetting the x-axis so it shows the year and not the observation number, having ACTUAL as the default and allowing you to add/overlay a new plot
   output$plot <- renderPlot({
-    plot(datasetInput(), xlab = "Year", 
-         ylab = "Percent Vote Share in Selected Model", main = "Selected Model Vote Share by Year", 
-         type = "l", xaxt = "n")
+    presidentialForecast$year <- rownames(presidentialForecast)
+    plot(x = 1:input$obs, y = presidentialForecast$Actual[1:input$obs], xlab = "Year", 
+    ylab = "Percent Vote Share in Selected Model", main = "Selected Model Vote Share by Year", 
+    xaxt = "n", type = "l")
     axis(1, at = seq(1, 15, 1), labels = seq(1952, 2008, 4), las = 2)
+    lines(x = 1:input$obs, y = datasetInput()[1:input$obs], col = "green", type = "l")
   })
   #show the tail of the label so it shows the most recent election result(s) from the desired number of previous elections to see
   output$view <- renderTable({
